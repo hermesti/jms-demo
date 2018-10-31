@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:mvc="http://www.springframework.org/schema/mvc" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xsi:schemaLocation="
+       http://www.springframework.org/schema/mvc     http://www.springframework.org/schema/mvc/spring-mvc-3.0.xsd
+       http://www.springframework.org/schema/beans   http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
+       http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.1.xsd">
+
+	<context:annotation-config />
+
+	<!-- Establece ficheros de configuración. Gracias a order=1, puede ser reemplazado 
+		por otros ficheros de configuración. -->
+	<context:property-placeholder
+		location="
+			classpath:config/application.properties, 
+			classpath:config/entidad.properties"
+		ignore-resource-not-found="true" order="1" />
+
+	<context:component-scan base-package="com.hermesti.plan2go.modelo.importadores" />
+
+	<!-- Aplica automáticamente conversiones a las propiedades inyectadas por 
+		spring. Por ejemplo: las propiedades con listas separadas por comas pueden 
+		ahora inyectarse correctamente en propiedades de tipo List. -->
+	<bean id="conversionService"
+		class="org.springframework.context.support.ConversionServiceFactoryBean" />
+
+	<!-- Idiomatización -->
+	<bean id="messageSource"
+		class="org.springframework.context.support.ReloadableResourceBundleMessageSource">
+		<property name="basenames">
+			<list>
+				<value>classpath:literales/errores</value>
+				<value>classpath:literales/general</value>
+				<value>classpath:literales/correos</value>
+				<value>classpath:literales/sms</value>
+				<value>classpath:literales/mandato</value>
+				<value>classpath:literales/prueba</value>
+			</list>
+		</property>
+		<property name="defaultEncoding" value="UTF-8" />
+	</bean>
+
+</beans>

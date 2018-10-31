@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?> 
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:mvc="http://www.springframework.org/schema/mvc"
+       xsi:schemaLocation="
+       http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.2.xsd
+       http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.2.xsd
+       http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc-4.2.xsd 
+">
+ 
+ 	<mvc:annotation-driven/> 
+ 	
+    <context:component-scan base-package="com.sstrategy.demo.controlador" />
+
+    <!-- Establece ficheros de configuración: Atención, debe estar aquí y también en applicationContext, puesto que cada
+    		declaración solo tiene efecto sobre los Beans declarados en cada contexto particular. Ver:
+    		http://stackoverflow.com/a/11891396 -->
+	<context:property-placeholder 
+		location="classpath:config/application.properties, classpath:config/entidad.properties" 
+		ignore-resource-not-found="true" />
+		
+	<!-- Configuración CORS (Cross-Origin Resource Sharing). Por ahora permitimos acceso desde cualquier dominio origen. Y, para
+	     todos ellos, permitimos todos los posibles métodos que usamos en el servicio.
+		 Establecer aquí el elemento <mvc:cors /> tiene dos implicaciones:
+		 1- No es necesario añadir anotaciones CrossOrigin a los controladores, se aplicará por defecto la configuración 
+		    definidia aquí.
+		 2- No es necesario generar respuestas a las peticiones OPTIONS hechas por los navegadores como parte del protocolo CORS
+		    para peticiones "Preflighted". Spring se encarga automáticamente. Una petición preflighted es una petición que el
+		    navegador considera sensible desde el punto de vista del acceso Cross-Domain (debido al método HTTP o a las 
+		    cabeceras). Cuando se pide al navegador que haga una de estas peticiones, el navegador envía una petición OPTIONS 
+		    previa para preguntar al servidor si va a aceptar la petición.
+		 Para más información sobre el funcionamiento de CORS: 
+		 	https://developer.mozilla.org/en-US/docs/Web/HTTP/Access_control_CORS
+		 Y sobre su configuración en Spring mediante XML: 
+		 	https://spring.io/blog/2015/06/08/cors-support-in-spring-framework#xml-namespace -->
+	<mvc:cors>
+		<mvc:mapping path="/**"
+		allowed-methods="GET, POST, PUT, DELETE" />
+	</mvc:cors>
+    
+    <bean id="viewResolver"
+		class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+		<property name="prefix" value="/WEB-INF/jsp/" />
+		<property name="suffix" value=".jsp" />
+	</bean>
+
+    <bean id="multipartResolver"
+        class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+        <!-- max upload size in bytes -->
+        <property name="maxUploadSize" value="5242880" /> <!-- 5MB -->
+        
+        <!-- max size of file in memory (in bytes) -->
+        <property name="maxInMemorySize" value="1048576" /> <!-- 1MB -->
+
+    </bean>
+	
+</beans>
