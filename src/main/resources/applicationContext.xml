@@ -21,55 +21,106 @@
 
 	<context:component-scan base-package="com.hermesti.plan2go.modelo.importadores" />
 
-	<!-- Aplica automáticamente conversiones a las propiedades inyectadas por 
-		spring. Por ejemplo: las propiedades con listas separadas por comas pueden 
-		ahora inyectarse correctamente en propiedades de tipo List. -->
-	<bean id="conversionService"
-		class="org.springframework.context.support.ConversionServiceFactoryBean" />
-
-	<!-- Idiomatización -->
-	<bean id="messageSource"
-		class="org.springframework.context.support.ReloadableResourceBundleMessageSource">
-		<property name="basenames">
-			<list>
-				<value>classpath:literales/errores</value>
-				<value>classpath:literales/general</value>
-				<value>classpath:literales/correos</value>
-				<value>classpath:literales/sms</value>
-				<value>classpath:literales/mandato</value>
-				<value>classpath:literales/prueba</value>
-			</list>
-		</property>
-		<property name="defaultEncoding" value="UTF-8" />
-	</bean>
-
 	<!-- 
 		El elemento jms:annotation-driven permite utilizar la anotación @JmsListener para dar de alta escuchadores de mensajes. 
 		En este proyecto de ejemplo, los escuchadores se encuentran definidos en la clase Receiver.
 		Observa que debe definir un container-factory, que es una clase encargada de construir los JmsListener's. El container-factory
 		utilizado es un proporcionado por Spring: el DefaultJmsListenerContainerFactory. 
 	-->
-	<jms:annotation-driven container-factory="myJmsListenerContainerFactory" />
+	<jms:annotation-driven />
+
+	<!--
+		Esta es la clase encargada de generar conexiones con ActiveMQ. Se necesita tanto para generar JmsListenerContainerFactory's
+		(para los suscriptores/receptores) como para los JmsTemplate (para los publicadores/enviadores) 
+	-->
+	<bean id="jmsConnectionFactory" class="org.apache.activemq.ActiveMQConnectionFactory">
+		<property name="brokerURL" value="tcp://localhost:61616" />
+	</bean>
+	
+	<!-- 
+		================================
+		 ENVÍO DE MENSAJES: JmsTemplate 
+		================================	 
+	-->
+	
+	<!-- 
+		JmsTemplate para envíos punto a punto. Los mensajes se envían a una cola (queue) de la que serán extraídos por un destinatario. 
+		La propiedad pubSubDomain a false es la que determina que este JmsTemplate sirva para publicar mensajes punto a punto. 
+	-->
+	<bean id="jmsQueueTemplate" class="org.springframework.jms.core.JmsTemplate">
+		<property name="connectionFactory" ref="jmsConnectionFactory" />
+		<property name="pubSubDomain" value="false" />
+	</bean>
+	
+	<!-- 
+		JmsTemplate para publicaciones broadcast. Los mensajes se envían a un "topic", al que se suscriben los suscriptores.
+	-->
+	<bean id="jmsTopicTemplate" class="org.springframework.jms.core.JmsTemplate">
+		<property name="connectionFactory" ref="jmsConnectionFactory" />
+		<property name="pubSubDomain" value="true" />
+	</bean>
 
 	<!-- 
+		=========================================================
+		 RECEPCIÓN DE MENSAJES: JMS Listener Container Factory's
+		========================================================= 
+	-->
+
+	<!-- 
+		JmsListenerContainerFactory para receptores en envíos punto a punto.
+		
 		Define el bean a utilizar como container-factory por los métodos anotados como @JmsListener.
 		Atención a la propiedad clientId: el valor establecido aquí se refleja en la columna 'Client ID'
 		visible en la pestaña 'Subscribers' del Broker MQ (en nuestro caso, ActiveMQ, aunque supongo que será igual en
 		IBM MQ).
+		
+		La propiedad pubSubDomain a false es la que determina que este JmsListenerContainerFactory sirva para recibir mensajes
+		punto a punto.
 	-->
-	<bean id="myJmsListenerContainerFactory" class="org.springframework.jms.config.DefaultJmsListenerContainerFactory">
-		<property name="connectionFactory" ref="jmsQueueConnectionFactory" />
-		<property name="clientId" value="Demo de JMS" />
-	</bean>
-
-	<bean id="jmsQueueConnectionFactory" class="org.apache.activemq.ActiveMQConnectionFactory">
-		<property name="brokerURL" value="tcp://localhost:61616" />
-	</bean>
-
-	<bean id="jmsQueueTemplate" class="org.springframework.jms.core.JmsTemplate">
-		<property name="connectionFactory" ref="jmsQueueConnectionFactory" />
+	<bean id="queueJmsListenerContainerFactory" class="org.springframework.jms.config.DefaultJmsListenerContainerFactory">
+		<property name="connectionFactory" ref="jmsConnectionFactory" />
+		<property name="clientId" value="Cliente queue" />
+		<property name="pubSubDomain" value="false" />
 	</bean>
 	
+	<!-- 
+		Receptores de mensajes punto a punto (clases con métodos anotados como @JmsListener asociadas a JmsListenerContainerFactory de
+		recepción de mensajes punto a punto).
+	-->
 	<bean class="com.sstrategy.demo.Receiver" />
+	
+	<!--
+		Define dos beans como JmsListenerContainerFactory. Estas clases se encargand e instanciar los suscriptores. 
+		Definimos dos porque, para conseguir suscriptores "durables", se requieren suscriptores identificados por
+		clientId únicos. Dado que en este proyecto se describen dos suscriptores, y que el clientId es un parámetro del 
+		JmsListenerContainerFactory, tenemos que definir dos instancias.
+		
+		Nota: un suscriptor durable es aquel que sigue existiendo cuando la aplicación ya no está activa. Eso significa que,
+		una vez arrancada esta aplicación, se crearán dos suscriptores en ActiveMQ (que pueden consultarse en el administrador
+		de ActiveMQ), y esos suscriptores seguirán existiendo y recibiendo mensajes aunque la aplicación no esté funcionando.
+		Cuando la aplicación arranque de nuevo, recibirá los mensajes. Si los suscriptores fueran no-durables, los mensajes
+		recibidos mientras la aplicación no esté en funcionamiento se perderían. Para el uso que se va a hacer en las aplicaciones
+		Sstrategy, entiendo que se necesitarán suscriptores durables. 
+	-->
+	<bean id="topicJmsListenerContainerFactory1" class="org.springframework.jms.config.DefaultJmsListenerContainerFactory">
+		<property name="connectionFactory" ref="jmsConnectionFactory" />
+		<property name="clientId" value="ClienteTopic1" />
+		<property name="pubSubDomain" value="true" />
+		<property name="subscriptionDurable" value="true" />
+	</bean>
+	
+	<bean id="topicJmsListenerContainerFactory2" class="org.springframework.jms.config.DefaultJmsListenerContainerFactory">
+		<property name="connectionFactory" ref="jmsConnectionFactory" />
+		<property name="clientId" value="ClienteTopic2" />
+		<property name="pubSubDomain" value="true" />
+		<property name="subscriptionDurable" value="true" />
+	</bean>
+
+	<!-- 
+		Receptores de mensajes broadcast (clases con métodos anotados como @JmsListener asociadas a JmsListenerContainerFactory de
+		recepción de mensajes broadcast).
+	-->
+	<bean class="com.sstrategy.demo.Subscriber1" />
+	<bean class="com.sstrategy.demo.Subscriber2" />
 
 </beans>
