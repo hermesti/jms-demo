@@ -12,7 +12,7 @@ public class Receiver {
 	 */
 	@JmsListener(destination = "mailbox", subscription = "Ejemplo Receptor")
 	public void receiveMessage(Email email) {
-		System.out.println("Se ha recibido el siguiente objeto 'Email' como mensaje JMS: <" + email + ">");
+		System.out.println("Se ha recibido el siguiente objeto Email como mensaje JMS: <" + email + ">");
 	}
 	
 }
