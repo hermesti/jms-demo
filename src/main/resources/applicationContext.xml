@@ -2,10 +2,12 @@
 <beans xmlns="http://www.springframework.org/schema/beans"
 	xmlns:mvc="http://www.springframework.org/schema/mvc" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:jms="http://www.springframework.org/schema/jms"
 	xsi:schemaLocation="
-       http://www.springframework.org/schema/mvc     http://www.springframework.org/schema/mvc/spring-mvc-3.0.xsd
-       http://www.springframework.org/schema/beans   http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
-       http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.1.xsd">
+       http://www.springframework.org/schema/mvc     http://www.springframework.org/schema/mvc/spring-mvc-4.2.xsd
+       http://www.springframework.org/schema/beans   http://www.springframework.org/schema/beans/spring-beans-4.2.xsd
+       http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.2.xsd
+       http://www.springframework.org/schema/jms     http://www.springframework.org/schema/jms/spring-jms-4.2.xsd">
 
 	<context:annotation-config />
 
@@ -41,13 +43,33 @@
 		<property name="defaultEncoding" value="UTF-8" />
 	</bean>
 
+	<!-- 
+		El elemento jms:annotation-driven permite utilizar la anotación @JmsListener para dar de alta escuchadores de mensajes. 
+		En este proyecto de ejemplo, los escuchadores se encuentran definidos en la clase Receiver.
+		Observa que debe definir un container-factory, que es una clase encargada de construir los JmsListener's. El container-factory
+		utilizado es un proporcionado por Spring: el DefaultJmsListenerContainerFactory. 
+	-->
+	<jms:annotation-driven container-factory="myJmsListenerContainerFactory" />
+
+	<!-- 
+		Define el bean a utilizar como container-factory por los métodos anotados como @JmsListener.
+		Atención a la propiedad clientId: el valor establecido aquí se refleja en la columna 'Client ID'
+		visible en la pestaña 'Subscribers' del Broker MQ (en nuestro caso, ActiveMQ, aunque supongo que será igual en
+		IBM MQ).
+	-->
+	<bean id="myJmsListenerContainerFactory" class="org.springframework.jms.config.DefaultJmsListenerContainerFactory">
+		<property name="connectionFactory" ref="jmsQueueConnectionFactory" />
+		<property name="clientId" value="Demo de JMS" />
+	</bean>
+
 	<bean id="jmsQueueConnectionFactory" class="org.apache.activemq.ActiveMQConnectionFactory">
 		<property name="brokerURL" value="tcp://localhost:61616" />
 	</bean>
 
 	<bean id="jmsQueueTemplate" class="org.springframework.jms.core.JmsTemplate">
 		<property name="connectionFactory" ref="jmsQueueConnectionFactory" />
-		<!-- <property name="defaultDestination" ref="queueDestination" /> -->
 	</bean>
+	
+	<bean class="com.sstrategy.demo.Receiver" />
 
 </beans>

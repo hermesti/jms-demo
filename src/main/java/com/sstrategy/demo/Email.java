@@ -8,7 +8,8 @@ import java.io.Serializable;
 public class Email implements Serializable {
 
 	/**
-	 * Serial version UID autogenerado, para poder convertir este objeto en un mensaje JMS.
+	 * Serial version UID autogenerado.
+	 * Para poder convertir un objeto en un mensaje JMS, es necesario que sea serializable, y con un serialVersionUID único.
 	 */
 	private static final long serialVersionUID = -3579805425262712807L;
 	

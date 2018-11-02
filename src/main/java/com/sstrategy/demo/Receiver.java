@@ -6,9 +6,13 @@ import org.springframework.stereotype.Component;
 @Component
 public class Receiver {
 
-	@JmsListener(destination = "mailbox", containerFactory = "myFactory")
+	/**
+	 * Este escuchador de mensajes JMS recibe mensajes de la cola llamada "mailbox".
+	 * @param email el objeto Email publicado en forma de mensaje.
+	 */
+	@JmsListener(destination = "mailbox", subscription = "Ejemplo Receptor")
 	public void receiveMessage(Email email) {
-		System.out.println("Received <" + email + ">");
+		System.out.println("Se ha recibido el siguiente objeto 'Email' como mensaje JMS: <" + email + ">");
 	}
 	
 }
