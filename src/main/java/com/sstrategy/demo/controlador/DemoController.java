@@ -1,6 +1,8 @@
 package com.sstrategy.demo.controlador;
 
 import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -27,7 +29,9 @@ public class DemoController {
 			throws NoSuchMessageException, IOException {
 		
 		jmsTemplate.convertAndSend("mailbox", new Email("info@example.com", "Hello"));
-	
-		return "Se ha enviado un objeto Email a la cola llamada 'mailbox'.";
+		
+		// Un timestamp para mostrar en pantalla y verificar el instante en que se hace la petición.
+		String timestamp = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());
+		return timestamp + " - Se ha enviado un objeto Email a la cola llamada 'mailbox'.";
 	}
 }
