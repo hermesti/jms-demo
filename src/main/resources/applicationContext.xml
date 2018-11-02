@@ -41,4 +41,13 @@
 		<property name="defaultEncoding" value="UTF-8" />
 	</bean>
 
+	<bean id="jmsQueueConnectionFactory" class="org.apache.activemq.ActiveMQConnectionFactory">
+		<property name="brokerURL" value="tcp://localhost:61616" />
+	</bean>
+
+	<bean id="jmsQueueTemplate" class="org.springframework.jms.core.JmsTemplate">
+		<property name="connectionFactory" ref="jmsQueueConnectionFactory" />
+		<!-- <property name="defaultDestination" ref="queueDestination" /> -->
+	</bean>
+
 </beans>
